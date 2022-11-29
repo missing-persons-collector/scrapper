@@ -1,6 +1,7 @@
 package contract
 
 type ReceiverData struct {
+	ID    string
 	Key   string
 	Value string
 }
