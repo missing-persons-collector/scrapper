@@ -12,7 +12,7 @@ type dataOrError struct {
 	error error
 }
 
-func Start() []types.CollectedPage {
+func StartScrapping() []types.CollectedPage {
 	baseUrl := "https://nestali.gov.hr"
 	url := "/nestale-osobe-403/403?&page=%d"
 	element := ".osoba-wrapper .osoba-img"
