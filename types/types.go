@@ -1,4 +1,4 @@
-package contract
+package types
 
 type ReceiverData struct {
 	ID    string
@@ -26,4 +26,10 @@ type CollectedPage struct {
 	Page  int
 	Data  [][]ReceiverData
 	Error error
+}
+
+type Information struct {
+	UpdatedCount int
+	CreatedCount int
+	DeletedCount int
 }

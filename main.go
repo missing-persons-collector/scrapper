@@ -1,8 +1,8 @@
 package main
 
 import (
+	"fmt"
 	"log"
-	"missingPersons/contract"
 	"missingPersons/croatia"
 	"missingPersons/dataSource"
 )
@@ -18,40 +18,40 @@ func main() {
 		log.Fatalf("Error occurred while trying to create/find countries: %s. Exiting...", err.Error())
 	}
 
-	saveCountry(croatia.Start(), countryMap["croatia"])
-}
+	pages := croatia.Start()
+	fmt.Printf("Croatia: Found %d pages\n", len(pages))
+	info, err := croatia.SaveCountry(pages, countryMap["croatia"])
 
-func saveCountry(pages []contract.CollectedPage, country dataSource.Country) {
-	tx := dataSource.Transaction()
-	for _, page := range pages {
-		data := page.Data
+	if err != nil {
+		fmt.Println(err)
 
-		entries := make([]dataSource.Entry, 0)
-		for _, entr := range data {
-			person := dataSource.NewPerson()
-			for _, e := range entr {
-				newEntry := dataSource.NewEntry(e.Key, e.Value)
-				entries = append(entries, newEntry)
-			}
-
-			person.CountryID = country.ID
-			person.Entries = entries
-
-			if err := dataSource.SavePerson(&person); err != nil {
-				tx.Rollback()
-
-				return
-			}
-		}
+		return
 	}
 
-	tx.Commit()
+	fmt.Printf(`
+Croatia:
+    Created entries: %d
+    Updated entries: %d
+	Deleted entries: %d
+`, info.CreatedCount, info.UpdatedCount, info.DeletedCount)
 }
 
 func createCountries(list []string) (map[string]dataSource.Country, error) {
 	countryList := make(map[string]dataSource.Country, 0)
 
-	tx := dataSource.Transaction()
+	db := dataSource.DB()
+	tx := db.Begin()
+
+	if err := tx.Error; err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
 	for _, c := range list {
 		var country dataSource.Country
 		if err := dataSource.FindCountry(c, &country); err != nil {
@@ -70,7 +70,11 @@ func createCountries(list []string) (map[string]dataSource.Country, error) {
 		countryList[c] = country
 	}
 
-	tx.Commit()
+	commit := tx.Commit()
+
+	if err := commit.Error; err != nil {
+		return nil, err
+	}
 
 	return countryList, nil
 }

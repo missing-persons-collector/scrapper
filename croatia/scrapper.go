@@ -3,20 +3,20 @@ package croatia
 import (
 	"fmt"
 	"github.com/gocolly/colly"
-	"missingPersons/contract"
 	"missingPersons/kernel"
+	"missingPersons/types"
 )
 
 type dataOrError struct {
-	data  []contract.ReceiverData
+	data  []types.ReceiverData
 	error error
 }
 
-func Start() []contract.CollectedPage {
+func Start() []types.CollectedPage {
 	baseUrl := "https://nestali.gov.hr"
 	url := "/nestale-osobe-403/403?&page=%d"
 	element := ".osoba-wrapper .osoba-img"
-	pageCollector := make(chan contract.CollectedPage, 0)
+	pageCollector := make(chan types.CollectedPage, 0)
 
 	fmt.Println("Croatia: Starting collection...")
 
@@ -24,18 +24,18 @@ func Start() []contract.CollectedPage {
 		page := 1
 
 		for {
-			people := make([][]contract.ReceiverData, 0)
+			people := make([][]types.ReceiverData, 0)
 
 			kernel.Start(
 				baseUrl,
 				fmt.Sprintf(url, page),
 				element,
-				func(e *colly.HTMLElement, signal contract.Signal) {
+				func(e *colly.HTMLElement, signal types.Signal) {
 					url := fmt.Sprintf("%s%s", baseUrl, e.Attr("href"))
 
 					internalScraper(url, func(d dataOrError) {
 						if d.error != nil {
-							pageCollector <- contract.CollectedPage{
+							pageCollector <- types.CollectedPage{
 								Page:  0,
 								Data:  nil,
 								Error: d.error,
@@ -47,15 +47,15 @@ func Start() []contract.CollectedPage {
 
 						people = append(people, d.data)
 					})
-				}, func(_ *colly.Response, err error, signal contract.Signal) {
-					pageCollector <- contract.CollectedPage{
+				}, func(_ *colly.Response, err error, signal types.Signal) {
+					pageCollector <- types.CollectedPage{
 						Page:  0,
 						Data:  nil,
 						Error: err,
 					}
 					close(pageCollector)
-				}, func(r *colly.Request, signal contract.Signal) {
-				}, func(_ *colly.Response, signal contract.Signal) {
+				}, func(r *colly.Request, signal types.Signal) {
+				}, func(_ *colly.Response, signal types.Signal) {
 				})
 
 			if len(people) == 0 {
@@ -63,7 +63,7 @@ func Start() []contract.CollectedPage {
 				return
 			}
 
-			pageCollector <- contract.CollectedPage{
+			pageCollector <- types.CollectedPage{
 				Page: page,
 				Data: people,
 			}
@@ -72,7 +72,7 @@ func Start() []contract.CollectedPage {
 		}
 	}()
 
-	pages := make([]contract.CollectedPage, 0)
+	pages := make([]types.CollectedPage, 0)
 	for page := range pageCollector {
 		if page.Error != nil {
 			fmt.Printf("Croatia: An error occurred: %s. Stopping collection!", page.Error.Error())
@@ -91,10 +91,10 @@ func Start() []contract.CollectedPage {
 
 func internalScraper(url string, onData func(d dataOrError)) {
 	c := colly.NewCollector()
-	holder := make([]contract.ReceiverData, 0)
+	holder := make([]types.ReceiverData, 0)
 
-	c.OnHTML(".profile_details_right dl:first-of-type", func(e *colly.HTMLElement) {
-		data := contract.ReceiverData{
+	c.OnHTML(".profile_details_right dl", func(e *colly.HTMLElement) {
+		data := types.ReceiverData{
 			Key:   "",
 			Value: "",
 		}
@@ -113,7 +113,7 @@ func internalScraper(url string, onData func(d dataOrError)) {
 			if fullCollected {
 				holder = append(holder, data)
 				fullCollected = false
-				data = contract.ReceiverData{
+				data = types.ReceiverData{
 					Key:   "",
 					Value: "",
 				}

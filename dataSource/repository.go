@@ -11,9 +11,3 @@ func FindCountry(name string, country *Country) error {
 
 	return result.Error
 }
-
-func SavePerson(person *Person) error {
-	result := db.Create(person)
-
-	return result.Error
-}

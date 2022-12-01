@@ -20,7 +20,7 @@ func NewDataSource(host string, user string, pass string, dbName string) error {
 		return err
 	}
 
-	err = handle.AutoMigrate(&Country{}, &Person{}, &Entry{})
+	err = handle.AutoMigrate(&Country{}, &Person{})
 
 	if err != nil {
 		return err
@@ -31,8 +31,8 @@ func NewDataSource(host string, user string, pass string, dbName string) error {
 	return err
 }
 
-func Transaction() *gorm.DB {
-	return db.Begin()
+func DB() *gorm.DB {
+	return db
 }
 
 func Disconnect() error {

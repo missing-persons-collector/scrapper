@@ -3,19 +3,19 @@ package kernel
 import (
 	"fmt"
 	"github.com/gocolly/colly"
-	"missingPersons/contract"
+	"missingPersons/types"
 )
 
 type signal struct {
 	errorCh chan error
-	dataCh  chan [][]contract.ReceiverData
+	dataCh  chan [][]types.ReceiverData
 }
 
 func (s signal) Error() chan error {
 	return s.errorCh
 }
 
-func (s signal) Data() chan [][]contract.ReceiverData {
+func (s signal) Data() chan [][]types.ReceiverData {
 	return s.dataCh
 }
 
@@ -23,10 +23,10 @@ type kernel struct {
 	url       string
 	element   string
 	baseUrl   string
-	onHtml    func(e *colly.HTMLElement, signal contract.Signal)
-	onError   func(_ *colly.Response, err error, signal contract.Signal)
-	onScraped func(_ *colly.Response, signal contract.Signal)
-	onRequest func(r *colly.Request, signal contract.Signal)
+	onHtml    func(e *colly.HTMLElement, signal types.Signal)
+	onError   func(_ *colly.Response, err error, signal types.Signal)
+	onScraped func(_ *colly.Response, signal types.Signal)
+	onRequest func(r *colly.Request, signal types.Signal)
 }
 
 // e.Request.AbsoluteURL(e.Attr("href"))
@@ -67,11 +67,11 @@ func initKernel(
 	baseUrl string,
 	url string,
 	element string,
-	onHtml func(e *colly.HTMLElement, signal contract.Signal),
-	onError func(_ *colly.Response, err error, signal contract.Signal),
-	onRequest func(r *colly.Request, signal contract.Signal),
-	onScraped func(_ *colly.Response, signal contract.Signal),
-) contract.Kernel {
+	onHtml func(e *colly.HTMLElement, signal types.Signal),
+	onError func(_ *colly.Response, err error, signal types.Signal),
+	onRequest func(r *colly.Request, signal types.Signal),
+	onScraped func(_ *colly.Response, signal types.Signal),
+) types.Kernel {
 	return kernel{
 		url:       url,
 		element:   element,
@@ -87,10 +87,10 @@ func Start(
 	baseUrl string,
 	url string,
 	element string,
-	onHtml func(e *colly.HTMLElement, signal contract.Signal),
-	onError func(_ *colly.Response, err error, signal contract.Signal),
-	onRequest func(r *colly.Request, signal contract.Signal),
-	onScraped func(_ *colly.Response, signal contract.Signal),
+	onHtml func(e *colly.HTMLElement, signal types.Signal),
+	onError func(_ *colly.Response, err error, signal types.Signal),
+	onRequest func(r *colly.Request, signal types.Signal),
+	onScraped func(_ *colly.Response, signal types.Signal),
 ) {
 	kernel := initKernel(baseUrl, url, element, onHtml, onError, onRequest, onScraped)
 	kernel.Run()
