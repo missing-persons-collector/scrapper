@@ -3,7 +3,7 @@ package croatia
 import (
 	"fmt"
 	"github.com/gocolly/colly"
-	"missingPersons/kernel"
+	"missingPersons/collyAbstraction"
 	"missingPersons/types"
 )
 
@@ -26,7 +26,7 @@ func StartScrapping() []types.CollectedPage {
 		for {
 			people := make([][]types.ReceiverData, 0)
 
-			kernel.Start(
+			collyAbstraction.Start(
 				baseUrl,
 				fmt.Sprintf(url, page),
 				element,

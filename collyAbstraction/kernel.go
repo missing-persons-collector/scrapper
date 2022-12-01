@@ -1,23 +1,10 @@
-package kernel
+package collyAbstraction
 
 import (
 	"fmt"
 	"github.com/gocolly/colly"
 	"missingPersons/types"
 )
-
-type signal struct {
-	errorCh chan error
-	dataCh  chan [][]types.ReceiverData
-}
-
-func (s signal) Error() chan error {
-	return s.errorCh
-}
-
-func (s signal) Data() chan [][]types.ReceiverData {
-	return s.dataCh
-}
 
 type kernel struct {
 	url       string

@@ -6,6 +6,7 @@ import (
 	"log"
 	"missingPersons/croatia"
 	"missingPersons/dataSource"
+	"sync"
 )
 
 func main() {
@@ -15,7 +16,7 @@ func main() {
 
 	fmt.Println("Creating countries if they do not exist...")
 	countryMap, err := createCountries([]string{"croatia"})
-	fmt.Println("Countries created. Continuing...\n")
+	fmt.Println("Countries created or fetched. Continuing...\n")
 
 	if err != nil {
 		log.Fatalf("Error occurred while trying to create/find countries: %s. Exiting...", err.Error())
@@ -23,11 +24,22 @@ func main() {
 
 	executions := createExecutions(countryMap)
 
+	wg := &sync.WaitGroup{}
 	for countryName, exec := range executions {
-		if err := exec(); err != nil {
-			fmt.Printf("Country %s caused an error: %s. Continuing the rest of the countries...", countryName, err.Error())
-		}
+		wg.Add(1)
+		go func(exec func() error, wg *sync.WaitGroup) {
+			if err := exec(); err != nil {
+				fmt.Printf("Country %s caused an error: %s. Continuing the rest of the countries...", countryName, err.Error())
+			}
+
+			wg.Done()
+		}(exec, wg)
 	}
+
+	wg.Wait()
+
+	fmt.Println("")
+	fmt.Println("Process finished!")
 }
 
 func createExecutions(countryMap map[string]dataSource.Country) map[string]func() error {
