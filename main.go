@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"gorm.io/gorm"
 	"log"
 	"missingPersons/croatia"
 	"missingPersons/dataSource"
@@ -12,7 +13,9 @@ func main() {
 		log.Fatal(err)
 	}
 
+	fmt.Println("Creating countries if they do not exist...")
 	countryMap, err := createCountries([]string{"croatia"})
+	fmt.Println("Countries created. Continuing...\n")
 
 	if err != nil {
 		log.Fatalf("Error occurred while trying to create/find countries: %s. Exiting...", err.Error())
@@ -56,39 +59,26 @@ func createCountries(list []string) (map[string]dataSource.Country, error) {
 	countryList := make(map[string]dataSource.Country, 0)
 
 	db := dataSource.DB()
-	tx := db.Begin()
 
-	if err := tx.Error; err != nil {
-		return nil, err
-	}
+	if err := db.Transaction(func(tx *gorm.DB) error {
+		for _, c := range list {
+			var country dataSource.Country
+			if err := dataSource.FindCountry(c, &country); err != nil {
+				country := dataSource.NewCountry("croatia")
+				if err := dataSource.SaveCountry(&country); err != nil {
+					return err
+				}
 
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
+				countryList[c] = country
 
-	for _, c := range list {
-		var country dataSource.Country
-		if err := dataSource.FindCountry(c, &country); err != nil {
-			country := dataSource.NewCountry("croatia")
-			if err := dataSource.SaveCountry(&country); err != nil {
-				tx.Rollback()
-
-				return nil, err
+				continue
 			}
 
 			countryList[c] = country
-
-			continue
 		}
 
-		countryList[c] = country
-	}
-
-	commit := tx.Commit()
-
-	if err := commit.Error; err != nil {
+		return nil
+	}); err != nil {
 		return nil, err
 	}
 
