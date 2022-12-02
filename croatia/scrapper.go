@@ -2,136 +2,178 @@ package croatia
 
 import (
 	"fmt"
-	"github.com/gocolly/colly"
-	"missingPersons/collyAbstraction"
-	"missingPersons/types"
+	"regexp"
+	"strings"
+	"time"
 )
 
-type dataOrError struct {
-	data  []types.ReceiverData
-	error error
-}
-
-func StartScrapping() []types.CollectedPage {
+func StartScrapping() ([]rawPerson, error) {
+	page := 1
 	baseUrl := "https://nestali.gov.hr"
-	url := "/nestale-osobe-403/403?&page=%d"
-	element := ".osoba-wrapper .osoba-img"
-	pageCollector := make(chan types.CollectedPage, 0)
 
-	fmt.Println("Croatia: Starting collection...")
+	fieldMap := buildFieldMap()
 
-	go func() {
-		page := 1
+	people := make([]rawPerson, 0)
+	for {
+		fmt.Println(fmt.Sprintf("Croatia: Collecting page %d...", page))
+		listing, err := getListing(fmt.Sprintf("%s/nestale-osobe-403/403?&page=%d", baseUrl, page), ".nestali-list .osoba-img")
 
-		for {
-			people := make([][]types.ReceiverData, 0)
-
-			collyAbstraction.Start(
-				baseUrl,
-				fmt.Sprintf(url, page),
-				element,
-				func(e *colly.HTMLElement, signal types.Signal) {
-					url := fmt.Sprintf("%s%s", baseUrl, e.Attr("href"))
-
-					internalScraper(url, func(d dataOrError) {
-						if d.error != nil {
-							pageCollector <- types.CollectedPage{
-								Page:  0,
-								Data:  nil,
-								Error: d.error,
-							}
-
-							close(pageCollector)
-							return
-						}
-
-						people = append(people, d.data)
-					})
-				}, func(_ *colly.Response, err error, signal types.Signal) {
-					pageCollector <- types.CollectedPage{
-						Page:  0,
-						Data:  nil,
-						Error: err,
-					}
-					close(pageCollector)
-				}, func(r *colly.Request, signal types.Signal) {
-				}, func(_ *colly.Response, signal types.Signal) {
-				})
-
-			if len(people) == 0 {
-				close(pageCollector)
-				return
-			}
-
-			pageCollector <- types.CollectedPage{
-				Page: page,
-				Data: people,
-			}
-
-			page++
+		if err != nil {
+			return nil, err
 		}
-	}()
 
-	pages := make([]types.CollectedPage, 0)
-	for page := range pageCollector {
-		if page.Error != nil {
-			fmt.Printf("Croatia: An error occurred: %s. Stopping collection!", page.Error.Error())
-
+		if len(listing) == 0 {
 			break
 		}
 
-		pages = append(pages, page)
-		fmt.Println("Croatia: page collected: ", page.Page)
-	}
+		for _, item := range listing {
+			href := getAttr("href", item.Attr)
+			url := fmt.Sprintf("%s%s", baseUrl, href)
 
-	fmt.Println("Croatia: scrapping done!")
+			dataProperties, err := getListing(url, ".profile_details_right dl *")
 
-	return pages
-}
-
-func internalScraper(url string, onData func(d dataOrError)) {
-	c := colly.NewCollector()
-	holder := make([]types.ReceiverData, 0)
-
-	c.OnHTML(".profile_details_right dl", func(e *colly.HTMLElement) {
-		data := types.ReceiverData{
-			Key:   "",
-			Value: "",
-		}
-		fullCollected := false
-
-		e.ForEach("*", func(i int, element *colly.HTMLElement) {
-			if element.Name == "dt" {
-				data.Key = element.Text
+			if err != nil {
+				return nil, err
 			}
 
-			if element.Name == "dd" {
-				data.Value = element.Text
-				fullCollected = true
-			}
+			person := newRawPerson()
+			for i := 0; i < len(dataProperties); i++ {
+				var key, value string
+				v := dataProperties[i]
 
-			if fullCollected {
-				holder = append(holder, data)
-				fullCollected = false
-				data = types.ReceiverData{
-					Key:   "",
-					Value: "",
+				if v.Data == "dt" {
+					key = v.FirstChild.Data
+					v := dataProperties[i+1]
+					value = v.FirstChild.Data
+					i++
+				}
+
+				field, err := determineField(key, fieldMap)
+
+				if err != nil {
+					return nil, err
+				}
+
+				if field != "" {
+					person, err = updateRawPerson(field, value, person)
+
+					if err != nil {
+						return nil, err
+					}
 				}
 			}
-		})
-	})
 
-	c.OnScraped(func(response *colly.Response) {
-		onData(dataOrError{
-			data:  holder,
-			error: nil,
-		})
-	})
+			people = append(people, person)
+		}
 
-	if err := c.Visit(url); err != nil {
-		onData(dataOrError{
-			data:  nil,
-			error: err,
-		})
+		page++
 	}
+
+	return people, nil
+}
+
+func determineField(key string, fieldMap map[string]string) (string, error) {
+	for k, v := range fieldMap {
+		matched, err := regexp.MatchString(k, key)
+
+		if err != nil {
+			return "", err
+		}
+
+		if matched {
+			return v, nil
+		}
+	}
+
+	return "", nil
+}
+
+func updateRawPerson(k string, v string, person rawPerson) (rawPerson, error) {
+	if k == "Name" {
+		person.Name = v
+	}
+
+	if k == "LastName" {
+		person.LastName = v
+	}
+
+	if k == "MaidenName" {
+		person.MaidenName = v
+	}
+
+	if k == "Gender" {
+		if v == "Ž" {
+			v = "F"
+		}
+
+		person.Gender = v
+	}
+
+	if k == "DOB" {
+		t1 := strings.TrimRight(v, ". godine")
+		t2 := strings.TrimRight(t1, ".")
+
+		date, err := time.Parse("2.1.2006", strings.TrimRight(t2, "."))
+
+		if err != nil {
+			person.DOB = ""
+		} else {
+			person.DOB = date.String()
+		}
+
+	}
+
+	if k == "POB" {
+		person.POB = v
+	}
+
+	if k == "Citizenship" {
+		person.Citizenship = v
+	}
+
+	if k == "Country" {
+		person.Country = v
+	}
+
+	if k == "PrimaryAddress" {
+		person.PrimaryAddress = v
+	}
+
+	if k == "SecondaryAddress" {
+		person.SecondaryAddress = v
+	}
+
+	if k == "Height" {
+		person.Height = v
+	}
+
+	if k == "Hair" {
+		person.Hair = v
+	}
+
+	if k == "EyeColor" {
+		person.EyeColor = v
+	}
+
+	if k == "DOD" {
+		t1 := strings.TrimRight(v, ". godine")
+		t2 := strings.TrimRight(t1, ".")
+		date, err := time.Parse("2.1.2006", strings.TrimRight(t2, "."))
+
+		if err != nil {
+			person.DOD = ""
+		} else {
+			person.DOD = date.String()
+		}
+	}
+
+	if k == "POD" {
+		person.POD = v
+	}
+
+	if k == "Description" {
+		person.Description = v
+	}
+
+	return person, nil
 }
