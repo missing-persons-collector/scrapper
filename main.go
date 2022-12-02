@@ -47,7 +47,11 @@ func createExecutions(countryMap map[string]dataSource.Country) map[string]func(
 
 	list["Croatia"] = func() error {
 		people, err := croatia.StartScrapping()
-		fmt.Println(err)
+
+		if err != nil {
+			return err
+		}
+
 		fmt.Printf("Croatia: Found %d people\n", len(people))
 		info, err := croatia.SaveCountry(people, countryMap["croatia"])
 
