@@ -2,6 +2,7 @@ package httpClient
 
 import (
 	"net/http"
+	"time"
 )
 
 func newHttp() *http.Client {
@@ -9,22 +10,37 @@ func newHttp() *http.Client {
 }
 
 func SendRequest(url string) (*http.Response, error) {
-	request, err := NewRequest(Request{
-		Headers: nil,
-		Url:     url,
-		Method:  "GET",
-		Body:    nil,
-	})
-
-	if err != nil {
-		return nil, err
+	var backoffSchedule = []time.Duration{
+		1 * time.Second,
+		3 * time.Second,
+		10 * time.Second,
 	}
 
-	response, err := Make(request, newHttp())
+	var res *http.Response
+	var err error
 
-	if err != nil {
-		return nil, err
+	for _, backoff := range backoffSchedule {
+		request, rErr := NewRequest(Request{
+			Headers: nil,
+			Url:     url,
+			Method:  "GET",
+			Body:    nil,
+		})
+
+		if rErr != nil {
+			return nil, rErr
+		}
+
+		res, err = Make(request, newHttp())
+
+		if err != nil {
+			time.Sleep(backoff)
+
+			continue
+		}
+
+		return res, err
 	}
 
-	return response, nil
+	return res, err
 }

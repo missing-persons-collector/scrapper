@@ -16,12 +16,19 @@ func main() {
 
 	fmt.Println("Creating countries if they do not exist...")
 	countryMap, err := createCountries([]string{"croatia"})
-	fmt.Println("Countries created or fetched. Continuing...\n")
-
 	if err != nil {
 		log.Fatalf("Error occurred while trying to create/find countries: %s. Exiting...", err.Error())
 	}
 
+	fmt.Println("Countries created or fetched. Continuing...\n")
+
+	run(countryMap)
+
+	fmt.Println("")
+	fmt.Println("Process finished!")
+}
+
+func run(countryMap map[string]dataSource.Country) {
 	executions := createExecutions(countryMap)
 
 	wg := &sync.WaitGroup{}
@@ -37,9 +44,6 @@ func main() {
 	}
 
 	wg.Wait()
-
-	fmt.Println("")
-	fmt.Println("Process finished!")
 }
 
 func createExecutions(countryMap map[string]dataSource.Country) map[string]func() error {
@@ -80,9 +84,10 @@ func createCountries(list []string) (map[string]dataSource.Country, error) {
 	if err := db.Transaction(func(tx *gorm.DB) error {
 		for _, c := range list {
 			var country dataSource.Country
-			if err := dataSource.FindCountry(c, &country); err != nil {
+			if err := db.Where("name = ?", c).First(&country).Error; err != nil {
 				country := dataSource.NewCountry("croatia")
-				if err := dataSource.SaveCountry(&country); err != nil {
+
+				if err := db.Create(&country).Error; err != nil {
 					return err
 				}
 

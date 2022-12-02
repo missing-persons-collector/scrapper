@@ -34,17 +34,3 @@ func NewDataSource(host string, user string, pass string, dbName string) error {
 func DB() *gorm.DB {
 	return db
 }
-
-func Disconnect() error {
-	d, err := db.DB()
-
-	if err != nil {
-		return err
-	}
-
-	if err = d.Close(); err != nil {
-		return err
-	}
-
-	return nil
-}
