@@ -5,10 +5,6 @@ import (
 	"time"
 )
 
-func newHttp() *http.Client {
-	return NewClient(ClientParams{})
-}
-
 func SendRequest(url string) (*http.Response, error) {
 	var backoffSchedule = []time.Duration{
 		1 * time.Second,
@@ -31,7 +27,7 @@ func SendRequest(url string) (*http.Response, error) {
 			return nil, rErr
 		}
 
-		res, err = Make(request, newHttp())
+		res, err = Make(request, NewClient(ClientParams{}))
 
 		if err != nil {
 			time.Sleep(backoff)
