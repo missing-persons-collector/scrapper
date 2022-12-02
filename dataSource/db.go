@@ -8,12 +8,11 @@ import (
 
 var db *gorm.DB
 
-func connect(host string, user string, pass string, dbName string) (*gorm.DB, error) {
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=5432 sslmode=disable", host, user, pass, dbName)
-	return gorm.Open(postgres.Open(dsn), &gorm.Config{})
-}
-
 func NewDataSource(host string, user string, pass string, dbName string) error {
+	if db != nil {
+		return nil
+	}
+
 	handle, err := connect(host, user, pass, dbName)
 
 	if err != nil {
@@ -33,4 +32,10 @@ func NewDataSource(host string, user string, pass string, dbName string) error {
 
 func DB() *gorm.DB {
 	return db
+}
+
+func connect(host string, user string, pass string, dbName string) (*gorm.DB, error) {
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=5432 sslmode=disable", host, user, pass, dbName)
+	
+	return gorm.Open(postgres.Open(dsn), &gorm.Config{})
 }
