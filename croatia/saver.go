@@ -4,13 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
+	"missingPersons/common"
 	"missingPersons/dataSource"
+	"missingPersons/download"
 	"missingPersons/types"
 	"regexp"
 	"strings"
 )
 
-func SaveCountry(people []rawPerson, country dataSource.Country) (types.Information, error) {
+func SaveCountry(people []common.RawPerson, country dataSource.Country) (types.Information, error) {
 	fmt.Println("Croatia: Saving to database...")
 	db := dataSource.DB()
 
@@ -34,11 +36,25 @@ func SaveCountry(people []rawPerson, country dataSource.Country) (types.Informat
 			}
 
 			if dbPerson.ID == "" {
-				dbPerson = personFromRawPerson(id, country.ID, person)
+				dbPerson = common.PersonFromRawPerson(id, country.ID, person)
 			}
 
 			if err != nil {
 				return err
+			}
+
+			if person.ImageURL != "" {
+				fileName := download.CreateImageName(person.ImageURL, id)
+				ok, err := download.ImageExists(fileName)
+
+				if !ok && err == nil {
+					path, err := download.DownloadAndSaveImage(person.ImageURL, fileName)
+					if err != nil {
+						fmt.Println(fmt.Sprintf("Cannot download and save image: %s", err.Error()))
+					} else {
+						dbPerson.ImagePath = path
+					}
+				}
 			}
 
 			if dbPerson.ID == "" {
@@ -66,7 +82,7 @@ func SaveCountry(people []rawPerson, country dataSource.Country) (types.Informat
 	return info, nil
 }
 
-func createPersonId(person rawPerson) (string, error) {
+func createPersonId(person common.RawPerson) (string, error) {
 	final := fmt.Sprintf("%s%s%s%s", person.Name, person.LastName, person.DOB, person.POB)
 	final = strings.ToLower(final)
 

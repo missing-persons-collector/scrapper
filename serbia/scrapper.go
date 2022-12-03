@@ -1,4 +1,4 @@
-package croatia
+package serbia
 
 import (
 	"fmt"
@@ -10,14 +10,14 @@ import (
 
 func StartScrapping() ([]common.RawPerson, error) {
 	page := 1
-	baseUrl := "https://nestali.gov.hr"
+	baseUrl := "https://www.nestalisrbija.rs"
 
 	fieldMap := common.BuildFieldMap()
 
 	people := make([]common.RawPerson, 0)
 	for {
 		fmt.Println(fmt.Sprintf("Croatia: Collecting page %d...", page))
-		listing, err := common.GetListing(fmt.Sprintf("%s/nestale-osobe-403/403?&page=%d", baseUrl, page), ".nestali-list .osoba-img")
+		listing, err := common.GetListing(fmt.Sprintf("%s/nestali/lista/%d", baseUrl, page), ".missing-persons-row")
 
 		if err != nil {
 			return nil, err
@@ -62,17 +62,6 @@ func StartScrapping() ([]common.RawPerson, error) {
 						return nil, err
 					}
 				}
-			}
-
-			imageNode, err := common.Query(item, "img")
-
-			if err != nil {
-				fmt.Println(fmt.Sprintf("Cannot retrieve node: %s", err.Error()))
-			}
-
-			if imageNode != nil {
-				src := common.GetAttr("src", imageNode.Attr)
-				person.ImageURL = fmt.Sprintf("%s%s", baseUrl, src)
 			}
 
 			people = append(people, person)

@@ -1,8 +1,10 @@
-package croatia
+package common
 
-import "missingPersons/dataSource"
+import (
+	"missingPersons/dataSource"
+)
 
-func buildFieldMap() map[string]string {
+func BuildFieldMap() map[string]string {
 	fieldMap := make(map[string]string)
 	fieldMap["Ime"] = "Name"
 	fieldMap["Prezime"] = "LastName"
@@ -24,7 +26,7 @@ func buildFieldMap() map[string]string {
 	return fieldMap
 }
 
-func personFromRawPerson(id string, countryId string, raw rawPerson) dataSource.Person {
+func PersonFromRawPerson(id string, countryId string, raw RawPerson) dataSource.Person {
 	person := dataSource.NewPerson(id)
 
 	person.Name = raw.Name

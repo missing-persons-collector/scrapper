@@ -6,10 +6,13 @@ import (
 	"log"
 	"missingPersons/croatia"
 	"missingPersons/dataSource"
+	"os"
 	"sync"
 )
 
 func main() {
+	createImageDirIfNotExists()
+
 	if err := dataSource.NewDataSource("database", "postgres", "database", "database"); err != nil {
 		log.Fatal(err)
 	}
@@ -105,4 +108,16 @@ func createCountries(list []string) (map[string]dataSource.Country, error) {
 	}
 
 	return countryList, nil
+}
+
+func createImageDirIfNotExists() {
+	dir := "images"
+
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		fsErr := os.Mkdir(dir, os.ModePerm)
+
+		if fsErr != nil {
+			log.Fatal(fmt.Sprintf("Cannot create images directory: %s", fsErr.Error()))
+		}
+	}
 }

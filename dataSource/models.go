@@ -53,6 +53,7 @@ type Person struct {
 	PrimaryAddress   string `gorm:"default:null"`
 	SecondaryAddress string `gorm:"default:null"`
 	Country          string `gorm:"default:null"`
+	ImagePath        string `gorm:"default:null"`
 
 	Height   string `gorm:"default:null"`
 	Hair     string `gorm:"default:null"`

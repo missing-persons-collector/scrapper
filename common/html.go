@@ -1,4 +1,4 @@
-package croatia
+package common
 
 import (
 	"github.com/andybalholm/cascadia"
@@ -8,14 +8,14 @@ import (
 	"strings"
 )
 
-func getListing(url string, query string) ([]*html.Node, error) {
-	pageHtml, err := getHtml(url)
+func GetListing(url string, query string) ([]*html.Node, error) {
+	pageHtml, err := GetHtml(url)
 
 	if err != nil {
 		return nil, err
 	}
 
-	listing, err := queryList(pageHtml, query)
+	listing, err := QueryList(pageHtml, query)
 
 	if err != nil {
 		return nil, err
@@ -24,7 +24,7 @@ func getListing(url string, query string) ([]*html.Node, error) {
 	return listing, nil
 }
 
-func queryList(pageHtml *html.Node, query string) ([]*html.Node, error) {
+func QueryList(pageHtml *html.Node, query string) ([]*html.Node, error) {
 	sel, err := cascadia.Parse(query)
 	if err != nil {
 		return nil, err
@@ -35,7 +35,18 @@ func queryList(pageHtml *html.Node, query string) ([]*html.Node, error) {
 	return node, nil
 }
 
-func getHtml(url string) (*html.Node, error) {
+func Query(pageHtml *html.Node, query string) (*html.Node, error) {
+	sel, err := cascadia.Parse(query)
+	if err != nil {
+		return nil, err
+	}
+
+	node := cascadia.Query(pageHtml, sel)
+
+	return node, nil
+}
+
+func GetHtml(url string) (*html.Node, error) {
 	response, err := httpClient.SendRequest(url)
 
 	if err != nil {
@@ -59,7 +70,7 @@ func getHtml(url string) (*html.Node, error) {
 	return doc, nil
 }
 
-func getAttr(attr string, attributes []html.Attribute) string {
+func GetAttr(attr string, attributes []html.Attribute) string {
 	for _, a := range attributes {
 		if a.Key == attr {
 			return a.Val

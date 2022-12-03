@@ -1,6 +1,6 @@
-package croatia
+package common
 
-type rawPerson struct {
+type RawPerson struct {
 	Name             string
 	LastName         string
 	MaidenName       string
@@ -11,6 +11,7 @@ type rawPerson struct {
 	PrimaryAddress   string
 	SecondaryAddress string
 	Country          string
+	ImageURL         string
 
 	Height   string
 	Hair     string
@@ -24,6 +25,6 @@ type rawPerson struct {
 	Description string
 }
 
-func newRawPerson() rawPerson {
-	return rawPerson{}
+func NewRawPerson() RawPerson {
+	return RawPerson{}
 }
