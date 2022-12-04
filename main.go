@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"github.com/joho/godotenv"
 	"gorm.io/gorm"
 	"log"
+	"missingPersons/cloudinary"
 	"missingPersons/croatia"
 	"missingPersons/dataSource"
 	"os"
@@ -11,10 +13,15 @@ import (
 )
 
 func main() {
+	LoadEnv()
 	createImageDirIfNotExists()
 
+	if err := cloudinary.NewCloudinary(); err != nil {
+		log.Fatalln(err)
+	}
+
 	if err := dataSource.NewDataSource("database", "postgres", "database", "database"); err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 	}
 
 	fmt.Println("Creating countries if they do not exist...")
@@ -119,5 +126,13 @@ func createImageDirIfNotExists() {
 		if fsErr != nil {
 			log.Fatal(fmt.Sprintf("Cannot create images directory: %s", fsErr.Error()))
 		}
+	}
+}
+
+func LoadEnv() {
+	err := godotenv.Load(".env")
+
+	if err != nil {
+		log.Fatal(err)
 	}
 }

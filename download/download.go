@@ -70,3 +70,7 @@ func ImageExists(fileName string) (bool, error) {
 
 	return os.IsExist(err), nil
 }
+
+func RemoveImage(path string) error {
+	return os.Remove(path)
+}

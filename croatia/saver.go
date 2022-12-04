@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
+	"missingPersons/cloudinary"
 	"missingPersons/common"
 	"missingPersons/dataSource"
 	"missingPersons/download"
@@ -45,14 +46,22 @@ func SaveCountry(people []common.RawPerson, country dataSource.Country) (types.I
 
 			if person.ImageURL != "" {
 				fileName := download.CreateImageName(person.ImageURL, id)
-				ok, err := download.ImageExists(fileName)
+				_, err := cloudinary.Exists(dbPerson.CustomID)
 
-				if !ok && err == nil {
+				if err == nil {
 					path, err := download.DownloadAndSaveImage(person.ImageURL, fileName)
 					if err != nil {
 						fmt.Println(fmt.Sprintf("Cannot download and save image: %s", err.Error()))
 					} else {
-						dbPerson.ImagePath = path
+						if err := cloudinary.Upload(path, dbPerson.CustomID, "croatia"); err != nil {
+							fmt.Println(fmt.Sprintf("Cannot upload to cloudinary: %s", err.Error()))
+						} else {
+							if err := download.RemoveImage(path); err != nil {
+								fmt.Println(fmt.Sprintf("Failed to remove image: %s", err.Error()))
+							}
+
+							dbPerson.ImageID = dbPerson.CustomID
+						}
 					}
 				}
 			}
