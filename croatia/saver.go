@@ -89,6 +89,9 @@ func createPersonId(person common.RawPerson) (string, error) {
 	re := regexp.MustCompile(`\s+`)
 	final = re.ReplaceAllString(final, "")
 
+	re = regexp.MustCompile(`/`)
+	final = re.ReplaceAllString(final, "")
+
 	re = regexp.MustCompile(`\.`)
 	final = re.ReplaceAllString(final, "")
 

@@ -16,7 +16,6 @@ func StartScrapping() ([]common.RawPerson, error) {
 
 	people := make([]common.RawPerson, 0)
 	for {
-		fmt.Println(fmt.Sprintf("Croatia: Collecting page %d...", page))
 		listing, err := common.GetListing(fmt.Sprintf("%s/nestale-osobe-403/403?&page=%d", baseUrl, page), ".nestali-list .osoba-img")
 
 		if err != nil {
@@ -26,6 +25,8 @@ func StartScrapping() ([]common.RawPerson, error) {
 		if len(listing) == 0 {
 			break
 		}
+
+		fmt.Println(fmt.Sprintf("Croatia: Collecting page %d...", page))
 
 		for _, item := range listing {
 			href := common.GetAttr("href", item.Attr)

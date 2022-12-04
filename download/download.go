@@ -21,7 +21,7 @@ func DownloadAndSaveImage(URL, fileName string) (string, error) {
 	response, err := httpClient.SendRequest(URL)
 
 	if response.StatusCode != http.StatusOK {
-		return "", errors.New("Request returned non 200 status code.")
+		return "", errors.New(fmt.Sprintf("Request returned non 200 for %s", URL))
 	}
 
 	file, err := os.Create(absPath)
