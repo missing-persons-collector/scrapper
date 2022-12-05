@@ -15,6 +15,10 @@ import (
 
 func main() {
 	LoadEnv()
+
+	if err := dataSource.NewDataSource("database", "postgres", "database", "database"); err != nil {
+		log.Fatalf("Cannot connect to postgres database: %s", err.Error())
+	}
 	fmt.Println("Creating loggers...")
 	if err := logger.BuildLoggers([]string{"croatia", "serbia"}); err != nil {
 		log.Fatalf("Unable to build loggers: %s\n", err.Error())
@@ -24,10 +28,6 @@ func main() {
 	fmt.Println("Creating image directory...")
 	createImageDirIfNotExists()
 	fmt.Println("Image directory created!")
-
-	if err := dataSource.NewDataSource("database", "postgres", "database", "database"); err != nil {
-		log.Fatalf("Cannot connect to postgres database: %s", err.Error())
-	}
 
 	fmt.Println("Creating countries if they do not exist...")
 	countryMap, err := createCountries([]string{"croatia"})
