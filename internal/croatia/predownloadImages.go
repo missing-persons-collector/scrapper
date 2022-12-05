@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"missingPersons/common"
 	"missingPersons/download"
+	"missingPersons/logger"
 	"missingPersons/worker"
 )
 
@@ -84,10 +85,15 @@ func preDownloadImages(people []common.RawPerson) (map[string]string, error) {
 	w.Consume(func(val interface{}, consumerStream chan pathOrError) {
 		data := val.(dataOrError)
 
+		if data.error != nil {
+			consumerStream <- pathOrError{error: data.error}
+
+			return
+		}
+
 		path, err := imageSaver.Save(data.data.url, data.data.customId)
 
 		if err != nil {
-			fmt.Printf("Cannot fetch/save image to filesystem: %s\n", err.Error())
 			consumerStream <- pathOrError{error: err}
 
 			return
@@ -103,6 +109,7 @@ func preDownloadImages(people []common.RawPerson) (map[string]string, error) {
 		d := data.(pathOrError)
 
 		if d.error != nil {
+			logger.Error("croatia", fmt.Sprintf("Cannot fetch/save image to filesystem: %s\n", d.error.Error()))
 			fmt.Printf("Cannot fetch/save image to filesystem: %s\n", d.error.Error())
 
 			return

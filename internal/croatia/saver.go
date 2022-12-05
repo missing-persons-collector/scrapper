@@ -36,6 +36,7 @@ func SaveCountry(people []common.RawPerson, country dataSource.Country, imageSav
 			if i%100 == 0 {
 				fmt.Printf("Processed %d entries...\n", i)
 			}
+
 			id, err := createPersonId(person)
 
 			if err != nil {

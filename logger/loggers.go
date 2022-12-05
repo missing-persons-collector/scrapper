@@ -99,13 +99,13 @@ func BuildLoggers(countries []string) error {
 
 		_, err = os.Stat(logDir)
 
-		if os.IsNotExist(err) {
+		if err != nil && os.IsNotExist(err) {
 			err := os.MkdirAll(logDir, os.ModePerm)
 
 			if err != nil {
 				return err
 			}
-		} else if !os.IsExist(err) {
+		} else if err != nil && !os.IsExist(err) {
 			return err
 		}
 
@@ -130,9 +130,9 @@ func Info(country string, msg ...interface{}) {
 }
 
 func Error(country string, msg ...interface{}) {
-	loggers[fmt.Sprintf("error_%s", country)].Info(msg)
+	loggers[fmt.Sprintf("error_%s", country)].Error(msg)
 }
 
 func Warn(country string, msg ...interface{}) {
-	loggers[fmt.Sprintf("warning_%s", country)].Info(msg)
+	loggers[fmt.Sprintf("warning_%s", country)].Warn(msg)
 }

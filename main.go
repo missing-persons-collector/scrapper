@@ -8,57 +8,19 @@ import (
 	"missingPersons/dataSource"
 	"missingPersons/download"
 	croatia2 "missingPersons/internal/croatia"
-	"missingPersons/logger"
 	"os"
-	"sync"
 )
 
 func main() {
-	LoadEnv()
+	loadEnv()
 
-	if err := dataSource.NewDataSource("database", "postgres", "database", "database"); err != nil {
-		log.Fatalf("Cannot connect to postgres database: %s", err.Error())
-	}
-	fmt.Println("Creating loggers...")
-	if err := logger.BuildLoggers([]string{"croatia", "serbia"}); err != nil {
-		log.Fatalf("Unable to build loggers: %s\n", err.Error())
-	}
-	fmt.Println("Loggers created!")
-
-	fmt.Println("Creating image directory...")
-	createImageDirIfNotExists()
-	fmt.Println("Image directory created!")
-
-	fmt.Println("Creating countries if they do not exist...")
-	countryMap, err := createCountries([]string{"croatia"})
-	if err != nil {
-		log.Fatalf("Error occurred while trying to create/find countries: %s. Exiting...", err.Error())
-	}
-
-	fmt.Println("Countries created or fetched. Continuing...\n")
-
-	run(countryMap)
+	runDb()
+	runLoggers()
+	runCreateImageDir()
+	runScrappers(runCountries())
 
 	fmt.Println("")
 	fmt.Println("Process finished!")
-}
-
-func run(countryMap map[string]dataSource.Country) {
-	executions := createExecutions(countryMap)
-
-	wg := &sync.WaitGroup{}
-	for countryName, exec := range executions {
-		wg.Add(1)
-		go func(exec func() error, wg *sync.WaitGroup, countryName string) {
-			if err := exec(); err != nil {
-				fmt.Printf("Country %s caused an error: %s. Continuing the rest of the countries...", countryName, err.Error())
-			}
-
-			wg.Done()
-		}(exec, wg, countryName)
-	}
-
-	wg.Wait()
 }
 
 func createExecutions(countryMap map[string]dataSource.Country) map[string]func() error {
@@ -134,7 +96,7 @@ func createImageDirIfNotExists() {
 	}
 }
 
-func LoadEnv() {
+func loadEnv() {
 	err := godotenv.Load(".env")
 
 	if err != nil {

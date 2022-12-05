@@ -3,6 +3,7 @@ package croatia
 import (
 	"fmt"
 	"missingPersons/common"
+	"missingPersons/logger"
 	worker2 "missingPersons/worker"
 )
 
@@ -49,6 +50,7 @@ func waitFactory(people *[]common.RawPerson) func(data worker2.DataOrError) {
 	return func(data worker2.DataOrError) {
 		person := data.(personOrError)
 		if person.error != nil {
+			logger.Error("croatia", person.error.Error())
 			fmt.Println(person.error.Error())
 
 			return
