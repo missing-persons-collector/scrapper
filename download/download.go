@@ -11,17 +11,15 @@ import (
 )
 
 type ImageSaver interface {
-	Save(URL string, id string) error
+	Save(URL string, id string) (string, error)
 }
 
 type fsImageSaver struct{}
 
-func (i fsImageSaver) Save(URL string, id string) error {
+func (i fsImageSaver) Save(URL string, id string) (string, error) {
 	fileName := CreateImageName(URL, id)
 
-	_, err := downloadAndSaveImage(URL, fileName)
-
-	return err
+	return downloadAndSaveImage(URL, fileName)
 }
 
 func NewFsImageSaver() ImageSaver {

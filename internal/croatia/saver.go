@@ -48,12 +48,12 @@ func SaveCountry(people []common.RawPerson, country dataSource.Country, imageSav
 			}
 
 			if person.ImageURL != "" {
-				err := imageSaver.Save(person.ImageURL, id)
+				path, err := imageSaver.Save(person.ImageURL, id)
 
 				if err != nil {
 					fmt.Println(fmt.Sprintf("Cannot download and save image: %s", err.Error()))
 				} else {
-					dbPerson.ImageID = dbPerson.CustomID
+					dbPerson.ImageID = path
 				}
 			}
 
@@ -87,6 +87,10 @@ func SaveCountry(people []common.RawPerson, country dataSource.Country, imageSav
 	fmt.Println("Croatia: All records saved to database.")
 
 	return info, nil
+}
+
+func preDownloadImages() {
+
 }
 
 func diff(ids []string) error {
