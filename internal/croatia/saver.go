@@ -22,6 +22,14 @@ func SaveCountry(people []common.RawPerson, country dataSource.Country, imageSav
 		DeletedCount: 0,
 	}
 
+	fmt.Println("Preloading images...")
+	downloadCache, err := preDownloadImages(people)
+
+	if err != nil {
+		return types.Information{}, err
+	}
+	fmt.Println("Images preloaded!")
+
 	customIds := make([]string, 0)
 	if err := db.Transaction(func(tx *gorm.DB) error {
 		for i, person := range people {
@@ -48,13 +56,7 @@ func SaveCountry(people []common.RawPerson, country dataSource.Country, imageSav
 			}
 
 			if person.ImageURL != "" {
-				path, err := imageSaver.Save(person.ImageURL, id)
-
-				if err != nil {
-					fmt.Println(fmt.Sprintf("Cannot download and save image: %s", err.Error()))
-				} else {
-					dbPerson.ImageID = path
-				}
+				dbPerson.ImageID = downloadCache[id]
 			}
 
 			if dbPerson.ID == "" {
@@ -87,10 +89,6 @@ func SaveCountry(people []common.RawPerson, country dataSource.Country, imageSav
 	fmt.Println("Croatia: All records saved to database.")
 
 	return info, nil
-}
-
-func preDownloadImages() {
-
 }
 
 func diff(ids []string) error {
