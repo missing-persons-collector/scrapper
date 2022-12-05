@@ -8,7 +8,7 @@ import (
 
 func producerFactory(baseUrl string) func(producerStream chan nodeOrError, stopFn func()) {
 	return func(producerStream chan nodeOrError, stopFn func()) {
-		page := 139
+		page := 1
 
 		for {
 			listing, err := common.GetListing(fmt.Sprintf("%s/nestale-osobe-403/403?&page=%d", baseUrl, page), ".nestali-list .osoba-img")

@@ -5,23 +5,28 @@ import (
 	"github.com/joho/godotenv"
 	"gorm.io/gorm"
 	"log"
-	"missingPersons/cloudinary"
-	"missingPersons/croatia"
 	"missingPersons/dataSource"
+	"missingPersons/download"
+	croatia2 "missingPersons/internal/croatia"
+	"missingPersons/logger"
 	"os"
 	"sync"
 )
 
 func main() {
 	LoadEnv()
-	createImageDirIfNotExists()
-
-	if err := cloudinary.NewCloudinary(); err != nil {
-		log.Fatalln(err)
+	fmt.Println("Creating loggers...")
+	if err := logger.BuildLoggers([]string{"croatia", "serbia"}); err != nil {
+		log.Fatalf("Unable to build loggers: %s\n", err.Error())
 	}
+	fmt.Println("Loggers created!")
+
+	fmt.Println("Creating image directory...")
+	createImageDirIfNotExists()
+	fmt.Println("Image directory created!")
 
 	if err := dataSource.NewDataSource("database", "postgres", "database", "database"); err != nil {
-		log.Fatalln(err)
+		log.Fatalf("Cannot connect to postgres database: %s", err.Error())
 	}
 
 	fmt.Println("Creating countries if they do not exist...")
@@ -60,14 +65,14 @@ func createExecutions(countryMap map[string]dataSource.Country) map[string]func(
 	list := make(map[string]func() error, 0)
 
 	list["Croatia"] = func() error {
-		people, err := croatia.StartScrapping()
+		people, err := croatia2.StartScrapping()
 
 		if err != nil {
 			return err
 		}
 
 		fmt.Printf("Croatia: Found %d people\n", len(people))
-		info, err := croatia.SaveCountry(people, countryMap["croatia"])
+		info, err := croatia2.SaveCountry(people, countryMap["croatia"], download.NewFsImageSaver())
 
 		if err != nil {
 			return err
@@ -118,10 +123,10 @@ func createCountries(list []string) (map[string]dataSource.Country, error) {
 }
 
 func createImageDirIfNotExists() {
-	dir := "images"
+	dir := os.Getenv("IMAGE_DIRECTORY")
 
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		fsErr := os.Mkdir(dir, os.ModePerm)
+		fsErr := os.MkdirAll(dir, os.ModePerm)
 
 		if fsErr != nil {
 			log.Fatal(fmt.Sprintf("Cannot create images directory: %s", fsErr.Error()))

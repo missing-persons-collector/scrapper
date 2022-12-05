@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
-	"missingPersons/cloudinary"
 	"missingPersons/common"
 	"missingPersons/dataSource"
 	"missingPersons/download"
@@ -13,7 +12,7 @@ import (
 	"strings"
 )
 
-func SaveCountry(people []common.RawPerson, country dataSource.Country) (types.Information, error) {
+func SaveCountry(people []common.RawPerson, country dataSource.Country, imageSaver download.ImageSaver) (types.Information, error) {
 	fmt.Println("Croatia: Saving to database...")
 	db := dataSource.DB()
 
@@ -25,7 +24,10 @@ func SaveCountry(people []common.RawPerson, country dataSource.Country) (types.I
 
 	customIds := make([]string, 0)
 	if err := db.Transaction(func(tx *gorm.DB) error {
-		for _, person := range people {
+		for i, person := range people {
+			if i%100 == 0 {
+				fmt.Printf("Processed %d entries...\n", i)
+			}
 			id, err := createPersonId(person)
 
 			if err != nil {
@@ -46,24 +48,12 @@ func SaveCountry(people []common.RawPerson, country dataSource.Country) (types.I
 			}
 
 			if person.ImageURL != "" {
-				fileName := download.CreateImageName(person.ImageURL, id)
-				_, err := cloudinary.Exists(dbPerson.CustomID)
+				err := imageSaver.Save(person.ImageURL, id)
 
-				if err == nil {
-					path, err := download.DownloadAndSaveImage(person.ImageURL, fileName)
-					if err != nil {
-						fmt.Println(fmt.Sprintf("Cannot download and save image: %s", err.Error()))
-					} else {
-						if err := cloudinary.Upload(path, dbPerson.CustomID, "croatia"); err != nil {
-							fmt.Println(fmt.Sprintf("Cannot upload to cloudinary: %s", err.Error()))
-						} else {
-							if err := download.RemoveImage(path); err != nil {
-								fmt.Println(fmt.Sprintf("Failed to remove image: %s", err.Error()))
-							}
-
-							dbPerson.ImageID = dbPerson.CustomID
-						}
-					}
+				if err != nil {
+					fmt.Println(fmt.Sprintf("Cannot download and save image: %s", err.Error()))
+				} else {
+					dbPerson.ImageID = dbPerson.CustomID
 				}
 			}
 
@@ -89,7 +79,7 @@ func SaveCountry(people []common.RawPerson, country dataSource.Country) (types.I
 		return info, err
 	}
 
-	fmt.Println("Check difference between the database and scraped data...")
+	fmt.Println("Checking difference between the database and scraped data...")
 	if err := diff(customIds); err != nil {
 		fmt.Println(fmt.Sprintf("Difference could not be done: %s", err.Error()))
 	}

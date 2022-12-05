@@ -50,3 +50,17 @@ func PersonFromRawPerson(id string, countryId string, raw RawPerson) dataSource.
 
 	return person
 }
+
+func BatchRawPeople(items []RawPerson, batchNum int) [][]RawPerson {
+	batch := make([][]RawPerson, 0)
+	l := len(items) / batchNum
+	r := len(items) % 5
+	for i := 0; i < l; i++ {
+		slc := items[i*batchNum : (i+1)*batchNum]
+		batch = append(batch, slc)
+	}
+
+	batch = append(batch, items[len(items)-r:])
+
+	return batch
+}

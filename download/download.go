@@ -10,13 +10,31 @@ import (
 	"strings"
 )
 
-func DownloadAndSaveImage(URL, fileName string) (string, error) {
+type ImageSaver interface {
+	Save(URL string, id string) error
+}
+
+type fsImageSaver struct{}
+
+func (i fsImageSaver) Save(URL string, id string) error {
+	fileName := CreateImageName(URL, id)
+
+	_, err := downloadAndSaveImage(URL, fileName)
+
+	return err
+}
+
+func NewFsImageSaver() ImageSaver {
+	return fsImageSaver{}
+}
+
+func downloadAndSaveImage(URL, fileName string) (string, error) {
 	path, err := os.Getwd()
 	if err != nil {
 		return "", err
 	}
 
-	absPath := fmt.Sprintf("%s/%s/%s", path, "images", fileName)
+	absPath := fmt.Sprintf("%s/%s/%s", path, os.Getenv("IMAGE_DIRECTORY"), fileName)
 
 	response, err := httpClient.SendRequest(URL)
 
@@ -42,35 +60,4 @@ func DownloadAndSaveImage(URL, fileName string) (string, error) {
 func CreateImageName(url string, id string) string {
 	split := strings.Split(url, ".")
 	return fmt.Sprintf("%s.%s", id, split[len(split)-1])
-}
-
-func CreateAbsPath(fileName string) (string, error) {
-	path, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-
-	absPath := fmt.Sprintf("%s/%s/%s", path, "images", fileName)
-
-	return absPath, nil
-}
-
-func ImageExists(fileName string) (bool, error) {
-	absPath, err := CreateAbsPath(fileName)
-
-	if err != nil {
-		return false, err
-	}
-
-	_, err = os.Stat(absPath)
-
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-
-	return os.IsExist(err), nil
-}
-
-func RemoveImage(path string) error {
-	return os.Remove(path)
 }
