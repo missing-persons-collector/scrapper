@@ -44,13 +44,13 @@ func run(countryMap map[string]dataSource.Country) {
 	wg := &sync.WaitGroup{}
 	for countryName, exec := range executions {
 		wg.Add(1)
-		go func(exec func() error, wg *sync.WaitGroup) {
+		go func(exec func() error, wg *sync.WaitGroup, countryName string) {
 			if err := exec(); err != nil {
 				fmt.Printf("Country %s caused an error: %s. Continuing the rest of the countries...", countryName, err.Error())
 			}
 
 			wg.Done()
-		}(exec, wg)
+		}(exec, wg, countryName)
 	}
 
 	wg.Wait()

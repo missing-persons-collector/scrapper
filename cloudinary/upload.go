@@ -47,6 +47,19 @@ func Exists(id string) (string, error) {
 	return asset.SecureURL, nil
 }
 
+func RemoveImage(id string) error {
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ids := []string{id}
+
+	_, err := cldInstance.Admin.DeleteAssets(ctx, admin.DeleteAssetsParams{PublicIDs: ids})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func RemoveAllImages() {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 

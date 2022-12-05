@@ -3,86 +3,86 @@ package croatia
 import (
 	"fmt"
 	"missingPersons/common"
+	worker2 "missingPersons/worker"
 	"regexp"
 	"strings"
 	"time"
 )
 
 func StartScrapping() ([]common.RawPerson, error) {
-	page := 1
-	baseUrl := "https://nestali.gov.hr"
-
-	fieldMap := common.BuildFieldMap()
-
 	people := make([]common.RawPerson, 0)
-	for {
-		listing, err := common.GetListing(fmt.Sprintf("%s/nestale-osobe-403/403?&page=%d", baseUrl, page), ".nestali-list .osoba-img")
 
-		if err != nil {
-			return nil, err
-		}
-
-		if len(listing) == 0 {
-			break
-		}
-
-		fmt.Println(fmt.Sprintf("Croatia: Collecting page %d...", page))
-
-		for _, item := range listing {
-			href := common.GetAttr("href", item.Attr)
-			url := fmt.Sprintf("%s%s", baseUrl, href)
-
-			dataProperties, err := common.GetListing(url, ".profile_details_right dl *")
-
-			if err != nil {
-				return nil, err
-			}
-
-			person := common.NewRawPerson()
-			for i := 0; i < len(dataProperties); i++ {
-				var key, value string
-				v := dataProperties[i]
-
-				if v.Data == "dt" {
-					key = v.FirstChild.Data
-					v := dataProperties[i+1]
-					value = v.FirstChild.Data
-					i++
-				}
-
-				field, err := determineField(key, fieldMap)
-
-				if err != nil {
-					return nil, err
-				}
-
-				if field != "" {
-					person, err = updateRawPerson(field, value, person)
-
-					if err != nil {
-						return nil, err
-					}
-				}
-			}
-
-			imageNode, err := common.Query(item, "img")
-
-			if err != nil {
-				fmt.Println(fmt.Sprintf("Cannot retrieve node: %s", err.Error()))
-			}
-
-			if imageNode != nil {
-				src := common.GetAttr("src", imageNode.Attr)
-				person.ImageURL = fmt.Sprintf("%s%s", baseUrl, src)
-			}
-
-			people = append(people, person)
-		}
-
-		page++
-	}
+	worker := worker2.NewWorker[nodeOrError, personOrError](20)
+	worker.Produce(producerFactory("https://nestali.gov.hr"))
+	worker.Consume(consumerFactory("https://nestali.gov.hr", common.BuildFieldMap()))
+	worker.Wait(waitFactory(&people))
 
 	return people, nil
+}
+
+func processPerson(baseUrl string, fieldMap map[string]string, node nodeOrError, personStreamCh chan personOrError) {
+	if node.error != nil {
+		personStreamCh <- personOrError{error: node.error}
+
+		return
+	}
+
+	item := node.node
+
+	href := common.GetAttr("href", item.Attr)
+	url := fmt.Sprintf("%s%s", baseUrl, href)
+
+	dataProperties, err := common.GetListing(url, ".profile_details_right dl *")
+
+	if err != nil {
+		personStreamCh <- personOrError{error: err}
+
+		return
+	}
+
+	person := common.NewRawPerson()
+	for i := 0; i < len(dataProperties); i++ {
+		var key, value string
+		v := dataProperties[i]
+
+		if v.Data == "dt" {
+			key = v.FirstChild.Data
+			v := dataProperties[i+1]
+			value = v.FirstChild.Data
+			i++
+		}
+
+		field, err := determineField(key, fieldMap)
+
+		if err != nil {
+			personStreamCh <- personOrError{error: err}
+
+			return
+		}
+
+		if field != "" {
+			person, err = updateRawPerson(field, value, person)
+
+			if err != nil {
+				personStreamCh <- personOrError{error: err}
+
+				return
+			}
+		}
+	}
+
+	imageNode, err := common.Query(item, "img")
+
+	if err != nil {
+		fmt.Println(fmt.Sprintf("Cannot retrieve node: %s", err.Error()))
+	}
+
+	if imageNode != nil {
+		src := common.GetAttr("src", imageNode.Attr)
+		person.ImageURL = fmt.Sprintf("%s%s", baseUrl, src)
+	}
+
+	personStreamCh <- personOrError{person: person}
 }
 
 func determineField(key string, fieldMap map[string]string) (string, error) {

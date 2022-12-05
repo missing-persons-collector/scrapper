@@ -23,6 +23,7 @@ func SaveCountry(people []common.RawPerson, country dataSource.Country) (types.I
 		DeletedCount: 0,
 	}
 
+	customIds := make([]string, 0)
 	if err := db.Transaction(func(tx *gorm.DB) error {
 		for _, person := range people {
 			id, err := createPersonId(person)
@@ -79,6 +80,8 @@ func SaveCountry(people []common.RawPerson, country dataSource.Country) (types.I
 
 				info.UpdatedCount++
 			}
+
+			customIds = append(customIds, id)
 		}
 
 		return nil
@@ -86,9 +89,67 @@ func SaveCountry(people []common.RawPerson, country dataSource.Country) (types.I
 		return info, err
 	}
 
+	fmt.Println("Check difference between the database and scraped data...")
+	if err := diff(customIds); err != nil {
+		fmt.Println(fmt.Sprintf("Difference could not be done: %s", err.Error()))
+	}
+
 	fmt.Println("Croatia: All records saved to database.")
 
 	return info, nil
+}
+
+func diff(ids []string) error {
+	offset := 1
+	if err := dataSource.DB().Transaction(func(tx *gorm.DB) error {
+		for {
+			people := make([]dataSource.Person, 0)
+			if err := dataSource.DB().Limit(100).Offset(offset).Find(&people).Error; err != nil {
+				return err
+			}
+
+			if len(people) == 0 {
+				break
+			}
+
+			for _, p := range people {
+				lid := 0
+				rid := len(ids) - 1
+
+				found := false
+				for lid <= rid {
+					if ids[lid] == p.CustomID {
+						found = true
+
+						break
+					}
+
+					if ids[rid] == p.CustomID {
+						found = true
+
+						break
+					}
+
+					lid++
+					rid--
+				}
+
+				if !found {
+					if err := dataSource.DB().Where("ID = ?", p.ID).Delete(&dataSource.Person{}).Error; err != nil {
+						return err
+					}
+				}
+			}
+
+			offset += 100
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func createPersonId(person common.RawPerson) (string, error) {
