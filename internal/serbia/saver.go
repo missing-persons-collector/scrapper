@@ -1,4 +1,4 @@
-package croatia
+package serbia
 
 import (
 	"errors"
@@ -6,13 +6,12 @@ import (
 	"gorm.io/gorm"
 	"missingPersons/common"
 	"missingPersons/dataSource"
-	"missingPersons/download"
 	"missingPersons/types"
 	"regexp"
 	"strings"
 )
 
-func SaveCountry(people []common.RawPerson, country dataSource.Country, imageSaver download.ImageSaver) (types.Information, error) {
+func SaveCountry(people []common.RawPerson, country dataSource.Country) (types.Information, error) {
 	fmt.Println("Croatia: Saving to database...")
 	db := dataSource.DB()
 

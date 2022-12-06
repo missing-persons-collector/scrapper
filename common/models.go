@@ -16,6 +16,7 @@ type RawPerson struct {
 	Height   string
 	Hair     string
 	EyeColor string
+	Weight   string
 
 	// Date of disappearance
 	DOD string

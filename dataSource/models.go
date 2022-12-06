@@ -58,6 +58,7 @@ type Person struct {
 	Height   string `gorm:"default:null"`
 	Hair     string `gorm:"default:null"`
 	EyeColor string `gorm:"default:null"`
+	Weight   string `gorm:"default:null"`
 
 	// Date of disappearance
 	DOD string `gorm:"default:null"`

@@ -7,7 +7,8 @@ import (
 	"log"
 	"missingPersons/dataSource"
 	"missingPersons/download"
-	croatia2 "missingPersons/internal/croatia"
+	"missingPersons/internal/croatia"
+	"missingPersons/internal/serbia"
 	"os"
 )
 
@@ -27,14 +28,14 @@ func createExecutions(countryMap map[string]dataSource.Country) map[string]func(
 	list := make(map[string]func() error, 0)
 
 	list["Croatia"] = func() error {
-		people, err := croatia2.StartScrapping()
+		people, err := croatia.StartScrapping()
 
 		if err != nil {
 			return err
 		}
 
 		fmt.Printf("Croatia: Found %d people\n", len(people))
-		info, err := croatia2.SaveCountry(people, countryMap["croatia"], download.NewFsImageSaver())
+		info, err := croatia.SaveCountry(people, countryMap["croatia"], download.NewFsImageSaver())
 
 		if err != nil {
 			return err
@@ -42,6 +43,30 @@ func createExecutions(countryMap map[string]dataSource.Country) map[string]func(
 
 		fmt.Printf(`
 Croatia:
+    Created entries: %d
+    Updated entries: %d
+    Deleted entries: %d
+`, info.CreatedCount, info.UpdatedCount, info.DeletedCount)
+
+		return nil
+	}
+
+	list["Serbia"] = func() error {
+		people, err := serbia.StartScrapping()
+
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Serbia: Found %d people\n", len(people))
+		info, err := serbia.SaveCountry(people, countryMap["serbia"])
+
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf(`
+Serbia:
     Created entries: %d
     Updated entries: %d
     Deleted entries: %d
@@ -62,7 +87,7 @@ func createCountries(list []string) (map[string]dataSource.Country, error) {
 		for _, c := range list {
 			var country dataSource.Country
 			if err := db.Where("name = ?", c).First(&country).Error; err != nil {
-				country := dataSource.NewCountry("croatia")
+				country := dataSource.NewCountry(c)
 
 				if err := db.Create(&country).Error; err != nil {
 					return err

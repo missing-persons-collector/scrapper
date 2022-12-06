@@ -30,7 +30,7 @@ func runCreateImageDir() {
 
 func runCountries() map[string]dataSource.Country {
 	fmt.Println("Creating countries if they do not exist...")
-	countryMap, err := createCountries([]string{"croatia"})
+	countryMap, err := createCountries([]string{"croatia", "serbia"})
 	if err != nil {
 		log.Fatalf("Error occurred while trying to create/find countries: %s. Exiting...", err.Error())
 	}
@@ -48,7 +48,7 @@ func runScrappers(countryMap map[string]dataSource.Country) {
 		wg.Add(1)
 		go func(exec func() error, wg *sync.WaitGroup, countryName string) {
 			if err := exec(); err != nil {
-				logger.Info("croatia", fmt.Sprintf("Country %s caused an error: %s. Continuing the rest of the countries...", countryName, err.Error()))
+				//logger.Info(countryName, fmt.Sprintf("Country %s caused an error: %s. Continuing the rest of the countries...", countryName, err.Error()))
 				fmt.Printf("Country %s caused an error: %s. Continuing the rest of the countries...", countryName, err.Error())
 			}
 

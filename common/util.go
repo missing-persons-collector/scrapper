@@ -26,6 +26,28 @@ func BuildFieldMap() map[string]string {
 	return fieldMap
 }
 
+func BuildSerbiaFieldMap() map[string]string {
+	fieldMap := make(map[string]string)
+	fieldMap["Ime"] = "Name"
+	fieldMap["Prezime"] = "LastName"
+	fieldMap["Pol"] = "Gender"
+	fieldMap["Datum rođenja"] = "DOB"
+	fieldMap["Mjesto rođenja"] = "POB"
+	fieldMap["Državljanstvo"] = "Citizenship"
+	fieldMap["Prebivalište"] = "PrimaryAddress"
+	fieldMap["Boravište"] = "SecondaryAddress"
+	fieldMap["Težina"] = "Weight"
+	fieldMap["Država"] = "Country"
+	fieldMap["Visina"] = "Height"
+	fieldMap["Boja kose"] = "Hair"
+	fieldMap["Boja očiju"] = "EyeColor"
+	fieldMap["Datum nestanka"] = "DOD"
+	fieldMap["Mesto nestanka"] = "POD"
+	fieldMap["Opis u trenutku nestanka"] = "Description"
+
+	return fieldMap
+}
+
 func PersonFromRawPerson(id string, countryId string, raw RawPerson) dataSource.Person {
 	person := dataSource.NewPerson(id)
 
@@ -46,6 +68,7 @@ func PersonFromRawPerson(id string, countryId string, raw RawPerson) dataSource.
 	person.EyeColor = raw.Name
 	person.Gender = raw.Name
 	person.Hair = raw.Name
+	person.Weight = raw.Weight
 	person.Description = raw.Name
 
 	return person
