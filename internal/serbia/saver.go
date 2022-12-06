@@ -43,7 +43,8 @@ func SaveCountry(people []common.RawPerson, country dataSource.Country) (types.I
 			}
 
 			var dbPerson dataSource.Person
-			if err := db.Where("custom_id = ? and country_id = ?", id, country.ID).First(&dbPerson).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+
+			if err := tx.Raw("SELECT * FROM people WHERE custom_id = ? AND country_id = ?", id, country.ID).Scan(&dbPerson).First(&dbPerson).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 				return err
 			}
 

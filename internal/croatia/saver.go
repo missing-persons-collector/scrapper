@@ -44,7 +44,7 @@ func SaveCountry(people []common.RawPerson, country dataSource.Country, imageSav
 			}
 
 			var dbPerson dataSource.Person
-			if err := db.Where("custom_id = ? and country_id = ?", id, country.ID).First(&dbPerson).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			if err := tx.Raw("SELECT * FROM people WHERE custom_id = ? AND country_id = ?", id, country.ID).Scan(&dbPerson).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 				return err
 			}
 
@@ -146,7 +146,23 @@ func diff(ids []string) error {
 }
 
 func createPersonId(person common.RawPerson) (string, error) {
-	final := fmt.Sprintf("%s%s%s%s", person.Name, person.LastName, person.DOB, person.POB)
+	final := fmt.Sprintf(
+		"%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
+		person.Name,
+		person.LastName,
+		person.DOB,
+		person.POB,
+		person.PrimaryAddress,
+		person.Citizenship,
+		person.Country,
+		person.Weight,
+		person.Gender,
+		person.Height,
+		person.EyeColor,
+		person.DOD,
+		person.Hair,
+		person.SecondaryAddress,
+	)
 	final = strings.ToLower(final)
 
 	re := regexp.MustCompile(`\s+`)

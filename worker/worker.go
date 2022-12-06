@@ -33,9 +33,12 @@ func (w *Worker[T, F]) Produce(producer func(producerStream chan T, stop func())
 
 			for _, doneStream := range w.doneStreams {
 				<-doneStream
+
+				close(doneStream)
 			}
 
 			close(w.consumerStream)
+
 		})
 	}()
 }

@@ -49,7 +49,7 @@ func runScrappers(countryMap map[string]dataSource.Country) {
 		go func(exec func() error, wg *sync.WaitGroup, countryName string) {
 			if err := exec(); err != nil {
 				//logger.Info(countryName, fmt.Sprintf("Country %s caused an error: %s. Continuing the rest of the countries...", countryName, err.Error()))
-				fmt.Printf("Country %s caused an error: %s. Continuing the rest of the countries...", countryName, err.Error())
+				fmt.Printf("Country %s caused an error: %s. Continuing the rest of the countries...\n", countryName, err.Error())
 			}
 
 			wg.Done()

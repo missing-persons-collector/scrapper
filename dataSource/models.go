@@ -7,7 +7,7 @@ import (
 )
 
 type Base struct {
-	ID        string `gorm:"primary_key;type:uuid"`
+	ID        string `gorm:"primaryKey;type:uuid;autoIncrement:false"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
@@ -40,8 +40,8 @@ func NewCountry(name string) Country {
 type Person struct {
 	Base
 
-	CustomID  string
-	CountryID string
+	CustomID  string `gorm:"primaryKey"`
+	CountryID string `gorm:"primaryKey"`
 
 	Name             string `gorm:"default:null"`
 	LastName         string `gorm:"default:null"`
