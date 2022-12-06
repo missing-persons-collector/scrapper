@@ -1,4 +1,4 @@
-package serbia
+package predownloadImages
 
 import (
 	"fmt"
@@ -44,7 +44,7 @@ func (c pathOrError) Error() error {
 	return c.error
 }
 
-func preDownloadImages(people []common.RawPerson) (map[string]string, error) {
+func PreDownloadImages(people []common.RawPerson, createPersonId func(p common.RawPerson) (string, error)) (map[string]string, error) {
 	downloadCache := make(map[string]string)
 	for _, p := range people {
 		id, err := createPersonId(p)

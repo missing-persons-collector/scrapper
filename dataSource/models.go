@@ -40,7 +40,7 @@ func NewCountry(name string) Country {
 type Person struct {
 	Base
 
-	CustomID  string `gorm:"primaryKey"`
+	CustomID  string `gorm:"primaryKey;unique"`
 	CountryID string `gorm:"primaryKey"`
 
 	Name             string `gorm:"default:null"`

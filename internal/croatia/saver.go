@@ -7,6 +7,7 @@ import (
 	"missingPersons/common"
 	"missingPersons/dataSource"
 	"missingPersons/download"
+	"missingPersons/internal/predownloadImages"
 	"missingPersons/types"
 	"regexp"
 	"strings"
@@ -23,7 +24,9 @@ func SaveCountry(people []common.RawPerson, country dataSource.Country, imageSav
 	}
 
 	fmt.Println("Preloading images...")
-	downloadCache, err := preDownloadImages(people)
+	downloadCache, err := predownloadImages.PreDownloadImages(people, func(p common.RawPerson) (string, error) {
+		return createPersonId(p)
+	})
 
 	if err != nil {
 		return types.Information{}, err

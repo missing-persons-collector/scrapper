@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 	"missingPersons/common"
 	"missingPersons/dataSource"
+	"missingPersons/internal/predownloadImages"
 	"missingPersons/types"
 	"regexp"
 	"strings"
@@ -22,7 +23,9 @@ func SaveCountry(people []common.RawPerson, country dataSource.Country) (types.I
 	}
 
 	fmt.Println("Preloading images...")
-	downloadCache, err := preDownloadImages(people)
+	downloadCache, err := predownloadImages.PreDownloadImages(people, func(p common.RawPerson) (string, error) {
+		return createPersonId(p)
+	})
 
 	if err != nil {
 		return types.Information{}, err
