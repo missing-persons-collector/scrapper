@@ -7,8 +7,8 @@ import (
 	worker2 "missingPersons/worker"
 )
 
-func producerFactory(baseUrl string) func(producerStream chan nodeOrError, stopFn func()) {
-	return func(producerStream chan nodeOrError, stopFn func()) {
+func producerFactory(baseUrl string) func(producerStream chan<- nodeOrError, stopFn func()) {
+	return func(producerStream chan<- nodeOrError, stopFn func()) {
 		page := 1
 
 		for {
@@ -49,8 +49,8 @@ func producerFactory(baseUrl string) func(producerStream chan nodeOrError, stopF
 	}
 }
 
-func consumerFactory(baseUrl string, fieldMap map[string]string) func(val interface{}, consumerStream chan personOrError) {
-	return func(val interface{}, consumerStream chan personOrError) {
+func consumerFactory(baseUrl string, fieldMap map[string]string) func(val interface{}, consumerStream chan<- personOrError) {
+	return func(val interface{}, consumerStream chan<- personOrError) {
 		processPerson(baseUrl, fieldMap, val.(nodeOrError), consumerStream)
 	}
 }

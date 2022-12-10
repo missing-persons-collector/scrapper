@@ -26,7 +26,7 @@ func NewWorker[T DataOrError, F DataOrError](workerNum int) *Worker[T, F] {
 	}
 }
 
-func (w *Worker[T, F]) Produce(producer func(producerStream chan T, stop func())) {
+func (w *Worker[T, F]) Produce(producer func(producerStream chan<- T, stop func())) {
 	go func() {
 		producer(w.producerStream, func() {
 			close(w.producerStream)
@@ -43,7 +43,7 @@ func (w *Worker[T, F]) Produce(producer func(producerStream chan T, stop func())
 	}()
 }
 
-func (w *Worker[T, F]) Consume(consumer func(val interface{}, stream chan F)) {
+func (w *Worker[T, F]) Consume(consumer func(val interface{}, stream chan<- F)) {
 	for i := 0; i < w.workerNum; i++ {
 		go func(idx int) {
 			doneStream := w.doneStreams[idx]

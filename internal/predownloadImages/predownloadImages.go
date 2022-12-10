@@ -60,7 +60,7 @@ func PreDownloadImages(people []common.RawPerson, createPersonId func(p common.R
 
 	w := worker.NewWorker[dataOrError, pathOrError](10)
 
-	w.Produce(func(producerStream chan dataOrError, stopFn func()) {
+	w.Produce(func(producerStream chan<- dataOrError, stopFn func()) {
 		for _, p := range people {
 			id, err := createPersonId(p)
 
@@ -82,7 +82,7 @@ func PreDownloadImages(people []common.RawPerson, createPersonId func(p common.R
 		stopFn()
 	})
 
-	w.Consume(func(val interface{}, consumerStream chan pathOrError) {
+	w.Consume(func(val interface{}, consumerStream chan<- pathOrError) {
 		data := val.(dataOrError)
 
 		if data.error != nil {

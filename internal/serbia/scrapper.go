@@ -20,7 +20,7 @@ func StartScrapping() ([]common.RawPerson, error) {
 	return people, nil
 }
 
-func processPerson(baseUrl string, fieldMap map[string]string, node nodeOrError, personStreamCh chan personOrError) {
+func processPerson(baseUrl string, fieldMap map[string]string, node nodeOrError, personStreamCh chan<- personOrError) {
 	if node.error != nil {
 		personStreamCh <- personOrError{error: node.error}
 
